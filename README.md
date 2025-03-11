@@ -1,0 +1,1 @@
+# Sample-Prototype-for-Indian-Sign-Language-Static-Gesture-Recognition-System
