@@ -1,5 +1,5 @@
 FUNCTION evaluate_model(model, X_test, y_test, actions)
-    LOAD model weights from 'Video_holistic_GRU.h5'
+    LOAD model weights from 'holistic_GRU.h5'
     
     PREDICT yhat from X_test using the model
     CONVERT y_test and yhat to class labels
