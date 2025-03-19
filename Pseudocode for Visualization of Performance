@@ -1,0 +1,23 @@
+FUNCTION visualize_results(hist, ytrue, yhat, actions)
+    
+    PLOT training loss:
+        - x-axis: Number of epochs
+        - y-axis: Loss
+        - Data: hist.history['loss']
+
+    PLOT training accuracy:
+        - x-axis: Number of epochs
+        - y-axis: Accuracy
+        - Data: hist.history['categorical_accuracy']
+
+    GENERATE confusion matrix (cm) with:
+        - ytrue and yhat
+        - Labels as actions
+    
+    PLOT heatmap:
+        - Title: "Confusion Matrix"
+        - X-label: "Predicted"
+        - Y-label: "Actual"
+    
+    SHOW the plots
+END FUNCTION
