@@ -1,0 +1,115 @@
+import cv2
+import numpy as np
+import mediapipe as mp
+from keras.models import Sequential
+from keras.layers import GRU, Dense
+from keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
+import os
+
+# --- MediaPipe Setup ---
+mp_holistic = mp.solutions.holistic
+mp_drawing = mp.solutions.drawing_utils
+
+def mediapipe_detection(image, model):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image.flags.writeable = False
+    results = model.process(image)
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    return image, results
+
+def draw_styled_landmarks(image, results):
+    mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACEMESH_TESSELATION,
+                             mp_drawing.DrawingSpec(color=(80, 110, 10), thickness=1, circle_radius=1),
+                             mp_drawing.DrawingSpec(color=(80, 256, 121), thickness=1, circle_radius=1))
+    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
+                             mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=1, circle_radius=2),
+                             mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=1, circle_radius=1))
+    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                             mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=1, circle_radius=1),
+                             mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=1, circle_radius=2))
+    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                             mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=1, circle_radius=1),
+                             mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=1, circle_radius=2))
+
+def extract_keypoints(results):
+    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
+    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
+    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
+    return np.concatenate([pose, face, lh, rh])
+
+# --- Data Loading (Prototype - Simplified) ---
+DATA_PATH = "prototype_data"  # Create a folder called prototype_data
+actions = np.array(['AAH', 'AEEH'])  # Simplified actions for prototype
+sequence_length = 30  # Example sequence length
+
+def create_dummy_data():
+    if not os.path.exists(DATA_PATH):
+        os.makedirs(DATA_PATH)
+    for action in actions:
+        action_path = os.path.join(DATA_PATH, action)
+        if not os.path.exists(action_path):
+            os.makedirs(action_path)
+        for sequence_num in range(10):  # 10 dummy sequences per action
+            sequence_data = np.random.rand(sequence_length, 1662) #dummy keypoint data
+            np.save(os.path.join(action_path, f"{sequence_num}.npy"), sequence_data)
+
+create_dummy_data()
+
+label_map = {label: num for num, label in enumerate(actions)}
+sequences, labels = [], []
+for action in actions:
+    for sequence_file in os.listdir(os.path.join(DATA_PATH, action)):
+        window = np.load(os.path.join(DATA_PATH, action, sequence_file))
+        sequences.append(window)
+        labels.append(label_map[action])
+
+X = np.array(sequences)
+y = to_categorical(labels).astype(int)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# --- Model Building (Prototype) ---
+model = Sequential()
+model.add(GRU(64, return_sequences=True, activation='relu', input_shape=(sequence_length, 1662)))
+model.add(GRU(128, return_sequences=False, activation='relu'))
+model.add(Dense(actions.shape[0], activation='softmax'))
+
+model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
+model.fit(X_train, y_train, epochs=50, verbose=1)
+
+# --- Real-Time Prediction (Prototype) ---
+cap = cv2.VideoCapture(0)  # Use webcam
+with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    sequence = []
+    sentence = []
+    threshold = 0.8  # Adjust as needed
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        image, results = mediapipe_detection(frame, holistic)
+        draw_styled_landmarks(image, results)
+
+        keypoints = extract_keypoints(results)
+        sequence.append(keypoints)
+        sequence = sequence[-sequence_length:]
+
+        if len(sequence) == sequence_length:
+            res = model.predict(np.expand_dims(sequence, axis=0))[0]
+            prediction = actions[np.argmax(res)]
+
+            if res[np.argmax(res)] > threshold:
+                if len(sentence) == 0 or sentence[-1] != prediction:
+                    sentence.append(prediction)
+                if len(sentence) > 5:
+                    sentence = sentence[-5:]
+
+            cv2.putText(image, ' '.join(sentence), (3, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+        cv2.imshow('OpenCV Feed', image)
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
