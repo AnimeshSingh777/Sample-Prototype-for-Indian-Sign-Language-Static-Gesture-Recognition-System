@@ -1,0 +1,28 @@
+import matplotlib
+from matplotlib.font_manager import FontProperties
+import wandb, inltk, codecs
+from indic_transliteration import sanscript
+from indic_transliteration.sanscript import transliterate
+from asyncio.windows_events import NULL
+import re
+import cv2
+import numpy as np
+import os
+from keras import layers
+from matplotlib import pyplot as plt
+import time
+import keras
+import mediapipe as mp
+from keras.optimizers import SGD, Adam
+from sklearn.metrics import confusion_matrix, f1_score
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.layers import LSTM, Dense, SimpleRNN, Input, Dropout, GRU
+from keras.callbacks import TensorBoard, LearningRateScheduler, ReduceLROnPlateau
+from sklearn.metrics import mean_squared_error, precision_score, recall_score, accuracy_score, multilabel_confusion_matrix
+import pandas as pd
+from math import sqrt
+import tensorflow as tf
+from wandb.keras import WandbCallback
