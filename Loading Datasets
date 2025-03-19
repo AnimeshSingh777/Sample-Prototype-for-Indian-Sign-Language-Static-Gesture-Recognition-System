@@ -1,0 +1,8 @@
+DATA_PATH = os.path.join('Static_holistic_On_Video_Retry')
+actions = np.array(['0', '1', '2', ... 'Z', 'AAH', 'AEEH', 'AEH', 'AH', 'AMH', 'EEH', 'EH', 'RIH'])
+for i in actions:
+    if i == '0':
+        im_paths = os.path.join(vid_path, i)
+        Zero = os.listdir(im_paths)
+        print("List of images in Zero: ")
+        print(Zero)
