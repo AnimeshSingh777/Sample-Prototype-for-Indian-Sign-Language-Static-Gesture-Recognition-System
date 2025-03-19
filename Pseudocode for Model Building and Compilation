@@ -1,0 +1,19 @@
+FUNCTION build_and_compile_model(actions)
+    DEFINE log_dir = PATH_JOIN('Logs')
+    INITIALIZE TensorBoard callback with log_dir
+
+    DEFINE Model as Sequential()
+    
+    DEFINE input_layer = Input(shape=(1, 1662))  ⬅️ 1662 features extracted from Mediapipe
+    DEFINE layer1 = GRU(512)(input_layer)          ⬅️ GRU layer with 512 units
+    DEFINE output_layer = Dense(LENGTH(actions), activation="softmax")(layer1)
+
+    INITIALIZE Model with inputs=input_layer and outputs=output_layer
+    
+    COMPILE Model with:
+        - Optimizer: Adam
+        - Loss: Categorical Cross-Entropy
+        - Metrics: ['categorical_accuracy', Recall, Precision]
+    
+    RETURN Model
+END FUNCTION
