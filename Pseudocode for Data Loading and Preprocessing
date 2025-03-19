@@ -1,0 +1,21 @@
+FUNCTION load_and_preprocess_data(actions, DATA_PATH)
+    DEFINE sequences = []
+    DEFINE labels = []
+    
+    FOR EACH action IN actions
+        SET im_paths = PATH_JOIN(DATA_PATH, action)  ⬅️ Path to the action folder
+        SET sequence_list = LIST_DIRECTORY(im_paths) 
+
+        FOR EACH sequence IN sequence_list
+            DEFINE window = []
+            LOAD res FROM .npy FILE (PATH_JOIN(im_paths, sequence))
+            APPEND res TO window
+            APPEND window TO sequences
+            APPEND label_map[action] TO labels
+    
+    CONVERT sequences TO NUMPY ARRAY AS X
+    CONVERT labels TO ONE-HOT ENCODED NUMPY ARRAY AS y
+    SPLIT X AND y INTO TRAIN AND TEST SETS (X_train, X_test, y_train, y_test) (TEST_SIZE = 20%)
+
+    RETURN X_train, X_test, y_train, y_test
+END FUNCTION
