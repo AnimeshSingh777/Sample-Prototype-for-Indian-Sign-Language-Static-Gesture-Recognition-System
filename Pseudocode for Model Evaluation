@@ -1,0 +1,28 @@
+FUNCTION evaluate_model(model, X_test, y_test, actions)
+    LOAD model weights from 'Video_holistic_GRU.h5'
+    
+    PREDICT yhat from X_test using the model
+    CONVERT y_test and yhat to class labels
+    
+    INITIALIZE total_correct = 0
+    INITIALIZE total_wrong = 0
+    
+    FOR i FROM 0 TO LENGTH(ytrue)
+        IF ytrue[i] == yhat[i]
+            INCREMENT total_correct
+        ELSE
+            INCREMENT total_wrong
+        END IF
+    END FOR
+
+    PRINT "Total Correct:", total_correct
+    PRINT "Total Wrong:", total_wrong
+
+    CALCULATE accuracy using accuracy_score(ytrue, yhat)
+    CALCULATE RMSE using sqrt(mean_squared_error(ytrue, yhat))
+    CALCULATE precision using precision_score()
+    CALCULATE recall using recall_score()
+    CALCULATE F1-score using f1_score()
+    
+    RETURN accuracy, RMSE, precision, recall, F1-score
+END FUNCTION
