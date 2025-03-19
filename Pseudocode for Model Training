@@ -1,0 +1,29 @@
+FUNCTION train_model(model, X_train, y_train)
+    DEFINE checkpoint_filepath = "Checkpoint/LSTM_Saved"
+    
+    INITIALIZE checkpoint_callback with:
+        - Filepath: checkpoint_filepath
+        - Monitor: 'categorical_accuracy'
+        - Save best only
+        - Save weights only
+    
+    INITIALIZE reduce_lr callback:
+        - Monitor: 'categorical_accuracy'
+        - Factor: 0.1
+        - Patience: 15
+        - Minimum learning rate: 0
+    
+    INITIALIZE terminate_callback:
+        - Monitor: 'categorical_accuracy'
+        - Patience: 50
+    
+    TRAIN model using:
+        - X_train and y_train
+        - Epochs: 2000
+        - Batch size: 256
+        - Callbacks: TensorBoard, checkpoint, reduce_lr, terminate_callback
+    
+    SAVE model as 'Video_holistic_GRU.h5'
+    
+    RETURN trained model
+END FUNCTION
